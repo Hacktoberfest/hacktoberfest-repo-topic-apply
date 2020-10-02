@@ -1,7 +1,7 @@
 # `hfest` command line tool
 
 `hfest` is a tool that adds the `hacktoberfest` topic to every repository associated
-with a user or a GitHub org
+with a user or a GitHub org. It also creates the `invalid`, `spam` and `hacktoberfest-accepted` tags to your repos by default
 
 ## Installation
 
@@ -53,4 +53,5 @@ Flags:
   -u, --gh-user=GH-USER        github user to fetch repos of
   -o, --gh-org=GH-ORG          github org to fetch repos of
       --topic="hacktoberfest"  topic to add to repos
-  -r, --remove                 Remove hacktoberfest topic from all repos
+  -r, --remove                 Remove hacktoberfest topic from all repos Default false
+  -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo. Default true
