@@ -2,12 +2,15 @@
 
 `hfest` is a tool that adds the `hacktoberfest` topic to every repository 
 associated with a user or a GitHub org. It also creates the `invalid`, `spam` 
-and `hacktoberfest-accepted` tags to your repos by default
+and `hacktoberfest-accepted` tags to your repos by default 
 
-## Installation
+## Installation 
 
 1. Download the latest release from [the releases page](https://github.com/do-community/hacktoberfest-repo-topic-apply/releases/).
 2. Either move the binary to `/usr/local/bin` or run it locally
+
+## Create a GitHub Token
+You will need a GitHub token to perform these actions on your repositories. Follow the instructions for [creating a personal access token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) and be sure to give it `repo` access.
 
 
 ## Usage
