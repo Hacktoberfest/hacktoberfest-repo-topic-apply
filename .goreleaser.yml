@@ -1,0 +1,18 @@
+project_name: hfest-repo
+builds:
+- env:
+  - CGO_ENABLED=0
+  - GO111MODULE=on
+  binary: hfest-repo
+  flags:
+  - -v
+  goos:
+  - windows
+  - darwin
+  - linux
+  ignore:
+  - goos: darwin
+    goarch: 386
+
+archives:
+- format: binary
