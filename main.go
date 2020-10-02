@@ -16,6 +16,7 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -31,6 +32,7 @@ var (
 	githubOrg   = kingpin.Flag("gh-org", "github org to fetch repos of").Short('o').String()
 	topic       = kingpin.Flag("topic", "topic to add to repos").Default("hacktoberfest").String()
 	remove      = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
+	labels      = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("true").Bool()
 )
 
 func main() {
@@ -49,7 +51,7 @@ func main() {
 	}
 
 	if *githubOrg == "" && *githubUser == "" {
-		log.Fatalf("Niether githubOrg or githubUser was set.")
+		log.Fatalf("Neither githubOrg or githubUser was set.")
 	} else if *githubOrg != "" && *githubUser != "" {
 		log.Fatalf("Both githubOrg and githubUser cannot be set")
 	}
@@ -100,7 +102,28 @@ func main() {
 		_, _, err := client.Repositories.ReplaceAllTopics(ctx, owner, *repo.Name, topics)
 		log.WithField("repo", *repo.Name).WithField("topic", *topic).Infof("%s topic", operation)
 		if err != nil {
-			log.WithError(err).Fatalf("issue adding hacktoberfest label")
+			log.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
+		}
+
+		labelColors := map[string]string{
+			"hacktoberfest-accepted": "9c4668",
+			"invalid":                "ca0b00",
+			"spam":                   "b33a3a",
+		}
+		if *labels == true {
+
+			for label, color := range labelColors {
+				_, _, err := client.Issues.CreateLabel(ctx, owner, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+				if err != nil {
+					if strings.Contains(err.Error(), "already_exists") {
+						continue
+					} else {
+						log.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
+					}
+				} else {
+					log.WithField("repo", *repo.Name).WithField("label", label).Info("adding labels")
+				}
+			}
 		}
 	}
 
