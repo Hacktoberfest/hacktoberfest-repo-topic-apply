@@ -1,4 +1,4 @@
-module github.com/do-community/do-ansible-inventory
+module github.com/do-community/hacktoberfest-repo-topic-apply
 
 go 1.14
 
