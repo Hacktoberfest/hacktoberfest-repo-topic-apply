@@ -41,6 +41,7 @@ If you don't specify your github token, the tool will look for an environment va
 
 ### Supported Options
 
+```
 usage: hfest-repo [<flags>]
 
 Flags:
@@ -53,3 +54,4 @@ Flags:
       --topic="hacktoberfest"  topic to add to repos
   -r, --remove                 Remove hacktoberfest topic from all repos Default false
   -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo. Default true
+ ```
