@@ -1,49 +1,47 @@
-# `hfest` command line tool
+# `hfest-repo` command line tool
 
-`hfest` is a tool that adds the `hacktoberfest` topic to every repository associated
-with a user or a GitHub org. It also creates the `invalid`, `spam` and `hacktoberfest-accepted` tags to your repos by default
+`hfest` is a tool that adds the `hacktoberfest` topic to every repository 
+associated with a user or a GitHub org. It also creates the `invalid`, `spam` 
+and `hacktoberfest-accepted` tags to your repos by default
 
 ## Installation
 
 1. Download the latest release from [the releases page](https://github.com/do-community/hacktoberfest-repo-topic-apply/releases/).
-   ```
-   curl -L <REPO> -o hfest
-   ```
 2. Either move the binary to `/usr/local/bin` or run it locally
 
 
 ## Usage
 
-To use `hfest`, run:
+To use `hfest-repo`, run:
 
 ```
-hfest -t <GITHUB_TOKEN> 
+hfest-repo -t <GITHUB_TOKEN> 
 ```
 If you don't specify your github token, the tool will look for an environment variable named GITHUB_ACCESS_TOKEN
 
 ### Add Hacktoberfest label to a users repos
 ```
-   hfest -t <GITHUB_TOKEN> -u <GITHUB_USER>
+   hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>
 ```
 
 ### Add Hacktoberfest label to an organizations repos
 ```
-   hfest -t <GITHUB_TOKEN> -o <GITHUB_ORG>
+   hfest-repo -t <GITHUB_TOKEN> -o <GITHUB_ORG>
 ```
 
 ### Remove Hacktoberfest label from a user/org 
 ```
-   hfest -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> --remove
+   hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> --remove
 ```
 
 ### Add an arbirary tag to a users/organizations repos
 ```
-   hfest -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> -p fun
+   hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> -p fun
 ```
 
 ### Supported Options
 
-usage: hfest [<flags>]
+usage: hfest-repo [<flags>]
 
 Flags:
       --help                   Show context-sensitive help (also try --help-long and --help-man).
