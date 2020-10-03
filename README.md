@@ -2,14 +2,15 @@
 
 `hfest` is a tool that adds the `hacktoberfest` topic to every repository 
 associated with a user or a GitHub org. It also creates the `invalid`, `spam` 
-and `hacktoberfest-accepted` tags to your repos by default 
+and `hacktoberfest-accepted` labels in your repos by default.
 
 ## Installation 
 
 1. Download the latest release from [the releases page](https://github.com/do-community/hacktoberfest-repo-topic-apply/releases/).
-2. Either move the binary to `/usr/local/bin` or run it locally
+2. Either move the binary to `/usr/local/bin` or run it locally.
 
 ## Create a GitHub Token
+
 You will need a GitHub token to perform these actions on your repositories. Follow the instructions for [creating a personal access token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) and be sure to give it `repo` access.
 
 
@@ -17,29 +18,29 @@ You will need a GitHub token to perform these actions on your repositories. Foll
 
 To use `hfest-repo`, run:
 
-```
+```sh
 hfest-repo -t <GITHUB_TOKEN> 
 ```
-If you don't specify your github token, the tool will look for an environment variable named GITHUB_ACCESS_TOKEN
+If you don't specify your GitHub token, the tool will look for an environment variable named `GITHUB_ACCESS_TOKEN`.
 
-### Add Hacktoberfest label to a users repos
-```
-   hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>
-```
-
-### Add Hacktoberfest label to an organizations repos
-```
-   hfest-repo -t <GITHUB_TOKEN> -o <GITHUB_ORG>
+### Add Hacktoberfest topic to a user's repos
+```sh
+hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>
 ```
 
-### Remove Hacktoberfest label from a user/org 
-```
-   hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> --remove
+### Add Hacktoberfest topic to an organization's repos
+```sh
+hfest-repo -t <GITHUB_TOKEN> -o <GITHUB_ORG>
 ```
 
-### Add an arbirary tag to a users/organizations repos
+### Remove Hacktoberfest topic from a user/org 
+```sh
+hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> --remove
 ```
-   hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> -p fun
+
+### Add an arbitrary tag to a user's/organization's repos
+```sh
+hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> -p fun
 ```
 
 ### Supported Options
