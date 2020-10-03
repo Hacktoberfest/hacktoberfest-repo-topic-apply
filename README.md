@@ -57,4 +57,5 @@ Flags:
       --topic="hacktoberfest"  topic to add to repos
   -r, --remove                 Remove hacktoberfest topic from all repos Default false
   -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo. Default true
- ```
+      --type=public            Type of repo to filter to
+```
