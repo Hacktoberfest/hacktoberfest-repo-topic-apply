@@ -64,28 +64,42 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
 
-	var repos []*github.Repository
+	var allRepos []*github.Repository
 	var owner string
 
 	if *githubOrg != "" {
 		owner = *githubOrg
 		opt := &github.RepositoryListByOrgOptions{Type: *repotype}
-		var err error
-		repos, _, err = client.Repositories.ListByOrg(ctx, owner, opt)
-		if err != nil {
-			log.WithError(err).Fatalf("issue getting repositories")
+		for {
+			var repos, resp, err = client.Repositories.ListByOrg(ctx, owner, opt)
+			if err != nil {
+				log.WithError(err).Fatalf("issue getting repositories")
+				break
+			}
+			allRepos = append(allRepos, repos...)
+			if resp.NextPage == 0 {
+				break
+			}
+			opt.Page = resp.NextPage
 		}
 	} else if *githubUser != "" {
 		owner = *githubUser
 		opt := &github.RepositoryListOptions{Type: *repotype}
-		var err error
-		repos, _, err = client.Repositories.List(ctx, owner, opt)
-		if err != nil {
-			log.WithError(err).Fatalf("issue getting repositories")
+		for {
+			var repos, resp, err = client.Repositories.List(ctx, owner, opt)
+			if err != nil {
+				log.WithError(err).Fatalf("issue getting repositories")
+				break
+			}
+			allRepos = append(allRepos, repos...)
+			if resp.NextPage == 0 {
+				break
+			}
+			opt.Page = resp.NextPage
 		}
 	}
 
-	for _, repo := range repos {
+	for _, repo := range allRepos {
 		var operation string
 		var topics []string
 		if *remove == true {
