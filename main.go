@@ -100,43 +100,45 @@ func main() {
 	}
 
 	for _, repo := range allRepos {
-		var operation string
-		var topics []string
-		if *remove == true {
-			operation = "removing"
-			for _, t := range repo.Topics {
-				if t != *topic {
-					topics = append(topics, t)
-				}
-			}
-		} else {
-			operation = "adding"
-			topics = repo.Topics
-			topics = append(topics, *topic)
-		}
-		_, _, err := client.Repositories.ReplaceAllTopics(ctx, owner, *repo.Name, topics)
-		log.WithField("repo", *repo.Name).WithField("topic", *topic).Infof("%s topic", operation)
-		if err != nil {
-			log.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
-		}
-
-		labelColors := map[string]string{
-			"hacktoberfest-accepted": "9c4668",
-			"invalid":                "ca0b00",
-			"spam":                   "b33a3a",
-		}
-		if *labels == true {
-
-			for label, color := range labelColors {
-				_, _, err := client.Issues.CreateLabel(ctx, owner, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
-				if err != nil {
-					if strings.Contains(err.Error(), "already_exists") {
-						continue
-					} else {
-						log.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
+		if *repo.Archived == false {
+			var operation string
+			var topics []string
+			if *remove == true {
+				operation = "removing"
+				for _, t := range repo.Topics {
+					if t != *topic {
+						topics = append(topics, t)
 					}
-				} else {
-					log.WithField("repo", *repo.Name).WithField("label", label).Info("adding labels")
+				}
+			} else {
+				operation = "adding"
+				topics = repo.Topics
+				topics = append(topics, *topic)
+			}
+			_, _, err := client.Repositories.ReplaceAllTopics(ctx, owner, *repo.Name, topics)
+			log.WithField("repo", *repo.Name).WithField("topic", *topic).Infof("%s topic", operation)
+			if err != nil {
+				log.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
+			}
+
+			labelColors := map[string]string{
+				"hacktoberfest-accepted": "9c4668",
+				"invalid":                "ca0b00",
+				"spam":                   "b33a3a",
+			}
+			if *labels == true {
+
+				for label, color := range labelColors {
+					_, _, err := client.Issues.CreateLabel(ctx, owner, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+					if err != nil {
+						if strings.Contains(err.Error(), "already_exists") {
+							continue
+						} else {
+							log.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
+						}
+					} else {
+						log.WithField("repo", *repo.Name).WithField("label", label).Info("adding labels")
+					}
 				}
 			}
 		}
