@@ -30,7 +30,7 @@ var (
 	githubToken = kingpin.Flag("access-token", "GitHub API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
 	githubUser  = kingpin.Flag("gh-user", "github user to fetch repos of").Short('u').String()
 	githubOrg   = kingpin.Flag("gh-org", "github org to fetch repos of").Short('o').String()
-	topic       = kingpin.Flag("topic", "topic to add to repos").Default("hacktoberfest").String()
+	topic       = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
 	remove      = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
 	labels      = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("true").Bool()
 	repotype    = kingpin.Flag("type", "Type of repo to filter to").HintOptions("public", "forks").Default("public").Enum("public", "private", "forks", "sources", "member", "internal")
