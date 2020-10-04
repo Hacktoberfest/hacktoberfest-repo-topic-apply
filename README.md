@@ -50,13 +50,12 @@ usage: hfest-repo [<flags>]
 
 Flags:
       --help                   Show context-sensitive help (also try --help-long and --help-man).
-  -t, --access-token=ACCESS-TOKEN
-                               GitHub API Token - if unset, attempts to use this tool's stored token of
-                               its current default context. env var: GITHUB_ACCESS_TOKEN
+  -t, --access-token=ACCESS-TOKEN  
+                               GitHub API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN
   -u, --gh-user=GH-USER        github user to fetch repos of
   -o, --gh-org=GH-ORG          github org to fetch repos of
-      --topic="hacktoberfest"  topic to add to repos
-  -r, --remove                 Remove hacktoberfest topic from all repos Default false
-  -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo. Default true
-      --type=public            Type of repo to filter to
+  -p, --topic="hacktoberfest"  topic to add to repos
+  -r, --remove                 Remove hacktoberfest topic from all repos
+  -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo
+      --type=public            Type of repo to filter to. Options: public, private, forks, sources, member, internal
 ```

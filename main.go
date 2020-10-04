@@ -33,7 +33,7 @@ var (
 	topic       = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
 	remove      = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
 	labels      = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("true").Bool()
-	repotype    = kingpin.Flag("type", "Type of repo to filter to").HintOptions("public", "forks").Default("public").Enum("public", "private", "forks", "sources", "member", "internal")
+	repotype    = kingpin.Flag("type", "Type of repo to filter to. Options: public, private, forks, sources, member, internal").HintOptions("public", "forks").Default("public").Enum("public", "private", "forks", "sources", "member", "internal")
 )
 
 func main() {
