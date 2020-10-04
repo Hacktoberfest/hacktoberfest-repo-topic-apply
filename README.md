@@ -1,8 +1,8 @@
 # `hfest-repo` command line tool
 
 `hfest` is a tool that adds the `hacktoberfest` topic to every repository 
-associated with a user or a GitHub org. It also creates the `invalid`, `spam` 
-and `hacktoberfest-accepted` labels in your repos by default.
+associated with a user or a GitHub org. It can also create the `invalid`, `spam` 
+and `hacktoberfest-accepted` labels in your repos.
 
 ## Installation 
 
@@ -23,6 +23,12 @@ hfest-repo -t <GITHUB_TOKEN>
 ```
 If you don't specify your GitHub token, the tool will look for an environment variable named `GITHUB_ACCESS_TOKEN`.
 
+### The "Default Hacktoberfest run this on my stuff" command
+
+```sh
+hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER> --labels
+```
+
 ### Add Hacktoberfest topic to a user's repos
 ```sh
 hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>
@@ -31,6 +37,16 @@ hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>
 ### Add Hacktoberfest topic to an organization's repos
 ```sh
 hfest-repo -t <GITHUB_TOKEN> -o <GITHUB_ORG>
+```
+
+### Add Hacktoberfest topic to a user's repos and add labels
+```sh
+hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER> --labels
+```
+
+### Add Hacktoberfest topic to an organization's repos and add labels
+```sh
+hfest-repo -t <GITHUB_TOKEN> -o <GITHUB_ORG> --labels
 ```
 
 ### Remove Hacktoberfest topic from a user/org 
