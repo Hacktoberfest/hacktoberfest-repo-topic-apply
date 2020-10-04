@@ -38,11 +38,6 @@ hfest-repo -t <GITHUB_TOKEN> -o <GITHUB_ORG>
 hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> --remove
 ```
 
-### Add an arbitrary tag to a user's/organization's repos
-```sh
-hfest-repo -t <GITHUB_TOKEN> -u <GITHUB_USER>/-o <GITHUB_ORG> -p fun
-```
-
 ### Supported Options
 
 ```
