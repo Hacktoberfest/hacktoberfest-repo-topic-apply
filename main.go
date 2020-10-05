@@ -53,8 +53,6 @@ func main() {
 
 	if *githubOrg == "" && *githubUser == "" {
 		log.Fatalf("Neither githubOrg or githubUser was set.")
-	} else if *githubOrg != "" && *githubUser != "" {
-		log.Fatalf("Both githubOrg and githubUser cannot be set")
 	}
 
 	ctx := context.Background()
@@ -65,13 +63,11 @@ func main() {
 	client := github.NewClient(tc)
 
 	var allRepos []*github.Repository
-	var owner string
 
 	if *githubOrg != "" {
-		owner = *githubOrg
 		opt := &github.RepositoryListByOrgOptions{Type: *repotype}
 		for {
-			var repos, resp, err = client.Repositories.ListByOrg(ctx, owner, opt)
+			var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
 			if err != nil {
 				log.WithError(err).Fatalf("issue getting repositories")
 				break
@@ -82,11 +78,11 @@ func main() {
 			}
 			opt.Page = resp.NextPage
 		}
-	} else if *githubUser != "" {
-		owner = *githubUser
+	}
+	if *githubUser != "" {
 		opt := &github.RepositoryListOptions{Type: *repotype}
 		for {
-			var repos, resp, err = client.Repositories.List(ctx, owner, opt)
+			var repos, resp, err = client.Repositories.List(ctx, *githubUser, opt)
 			if err != nil {
 				log.WithError(err).Fatalf("issue getting repositories")
 				break
@@ -115,7 +111,7 @@ func main() {
 				topics = repo.Topics
 				topics = append(topics, *topic)
 			}
-			_, _, err := client.Repositories.ReplaceAllTopics(ctx, owner, *repo.Name, topics)
+			_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
 			log.WithField("repo", *repo.Name).WithField("topic", *topic).Infof("%s topic", operation)
 			if err != nil {
 				log.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
@@ -129,7 +125,7 @@ func main() {
 			if *labels == true {
 
 				for label, color := range labelColors {
-					_, _, err := client.Issues.CreateLabel(ctx, owner, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+					_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
 					if err != nil {
 						if strings.Contains(err.Error(), "already_exists") {
 							continue
