@@ -27,13 +27,14 @@ import (
 )
 
 var (
-	githubToken = kingpin.Flag("access-token", "GitHub API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
-	githubUser  = kingpin.Flag("gh-user", "github user to fetch repos of").Short('u').String()
-	githubOrg   = kingpin.Flag("gh-org", "github org to fetch repos of").Short('o').String()
-	topic       = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
-	remove      = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
-	labels      = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
-	repotype    = kingpin.Flag("type", "Type of repo to filter to. Options: public, private, forks, sources, member, internal").HintOptions("public", "forks").Default("public").Enum("public", "private", "forks", "sources", "member", "internal")
+	githubToken    = kingpin.Flag("access-token", "GitHub API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
+	githubUser     = kingpin.Flag("gh-user", "github user to fetch repos of").Short('u').String()
+	githubOrg      = kingpin.Flag("gh-org", "github org to fetch repos of").Short('o').String()
+	topic          = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
+	remove         = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
+	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
+	includeForks   = kingpin.Flag("include-forks", "Include forks").Default("false").Bool()
+	includePrivate = kingpin.Flag("include-private", "Include private repos").Default("false").Bool()
 )
 
 func main() {
@@ -65,7 +66,7 @@ func main() {
 	var allRepos []*github.Repository
 
 	if *githubOrg != "" {
-		opt := &github.RepositoryListByOrgOptions{Type: *repotype}
+		opt := &github.RepositoryListByOrgOptions{Type: "all"}
 		for {
 			var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
 			if err != nil {
@@ -80,7 +81,7 @@ func main() {
 		}
 	}
 	if *githubUser != "" {
-		opt := &github.RepositoryListOptions{Type: *repotype}
+		opt := &github.RepositoryListOptions{Type: "all"}
 		for {
 			var repos, resp, err = client.Repositories.List(ctx, *githubUser, opt)
 			if err != nil {
@@ -96,45 +97,69 @@ func main() {
 	}
 
 	for _, repo := range allRepos {
-		if *repo.Archived == false {
-			var operation string
-			var topics []string
-			if *remove == true {
-				operation = "removing"
-				for _, t := range repo.Topics {
-					if t != *topic {
-						topics = append(topics, t)
-					}
+		loggerWithFields := log.WithField("repo", *repo.Name)
+
+		if *repo.Archived == true {
+			loggerWithFields.Info("skipping archived")
+			continue
+		}
+
+		if *repo.Disabled == true {
+			loggerWithFields.Info("skipping disabled")
+			continue
+		}
+
+		if *includeForks == false {
+			if *repo.Fork == true {
+				loggerWithFields.Info("skipping fork")
+				continue
+			}
+		}
+
+		if *includePrivate == true {
+			if *repo.Private == true {
+				loggerWithFields.Info("skipping private")
+				continue
+			}
+		}
+
+		var operation string
+		var topics []string
+		if *remove == true {
+			operation = "removing"
+			for _, t := range repo.Topics {
+				if t != *topic {
+					topics = append(topics, t)
 				}
-			} else {
-				operation = "adding"
-				topics = repo.Topics
-				topics = append(topics, *topic)
 			}
-			_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
-			log.WithField("repo", *repo.Name).WithField("topic", *topic).Infof("%s topic", operation)
-			if err != nil {
-				log.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
-			}
+		} else {
+			operation = "adding"
+			topics = repo.Topics
+			topics = append(topics, *topic)
+		}
+		_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
+		loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
+		if err != nil {
+			loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
+		}
 
-			labelColors := map[string]string{
-				"hacktoberfest-accepted": "9c4668",
-				"invalid":                "ca0b00",
-				"spam":                   "b33a3a",
-			}
-			if *labels == true {
+		labelColors := map[string]string{
+			"hacktoberfest-accepted": "9c4668",
+			"invalid":                "ca0b00",
+			"spam":                   "b33a3a",
+		}
+		if *labels == true {
 
-				for label, color := range labelColors {
-					_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
-					if err != nil {
-						if strings.Contains(err.Error(), "already_exists") {
-							continue
-						} else {
-							log.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
-						}
+			for label, color := range labelColors {
+				_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+				if err != nil {
+					if strings.Contains(err.Error(), "already_exists") {
+						continue
 					} else {
-						log.WithField("repo", *repo.Name).WithField("label", label).Info("adding labels")
+						loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
 					}
+				} else {
+					loggerWithFields.WithField("label", label).Info("adding labels")
 				}
 			}
 		}
