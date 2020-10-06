@@ -116,7 +116,7 @@ func main() {
 			}
 		}
 
-		if *includePrivate == true {
+		if *includePrivate == false {
 			if *repo.Private == true {
 				loggerWithFields.Info("skipping private")
 				continue
