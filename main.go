@@ -35,6 +35,7 @@ var (
 	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
 	includeForks   = kingpin.Flag("include-forks", "Include forks").Default("false").Bool()
 	includePrivate = kingpin.Flag("include-private", "Include private repos").Default("false").Bool()
+	dryRun         = kingpin.Flag("dry-run", "Show more or less what will be done without doing anything").Short('d').Default("true").Bool()
 )
 
 func main() {
@@ -137,31 +138,36 @@ func main() {
 			topics = repo.Topics
 			topics = append(topics, *topic)
 		}
-		_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
-		loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
-		if err != nil {
-			loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
-		}
 
-		labelColors := map[string]string{
-			"hacktoberfest-accepted": "9c4668",
-			"invalid":                "ca0b00",
-			"spam":                   "b33a3a",
-		}
-		if *labels == true {
+		if *dryRun != true {
+			_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
+			loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
+			if err != nil {
+				loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
+			}
 
-			for label, color := range labelColors {
-				_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
-				if err != nil {
-					if strings.Contains(err.Error(), "already_exists") {
-						continue
+			labelColors := map[string]string{
+				"hacktoberfest-accepted": "9c4668",
+				"invalid":                "ca0b00",
+				"spam":                   "b33a3a",
+			}
+			if *labels == true {
+
+				for label, color := range labelColors {
+					_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+					if err != nil {
+						if strings.Contains(err.Error(), "already_exists") {
+							continue
+						} else {
+							loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
+						}
 					} else {
-						loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
+						loggerWithFields.WithField("label", label).Info("adding labels")
 					}
-				} else {
-					loggerWithFields.WithField("label", label).Info("adding labels")
 				}
 			}
+		} else {
+			loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)
 		}
 	}
 
