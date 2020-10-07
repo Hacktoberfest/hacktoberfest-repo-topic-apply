@@ -2,7 +2,7 @@
 
 `hfest` is a tool that adds the `hacktoberfest` topic to every repository 
 associated with a user or a GitHub org. It can also create the `invalid`, `spam` 
-and `hacktoberfest-accepted` labels in your repos.
+and `hacktoberfest-accepted` labels in your repository.
 
 ## Installation 
 
