@@ -1,4 +1,5 @@
 project_name: hfest-repo
+
 builds:
 - env:
   - CGO_ENABLED=0
@@ -13,3 +14,6 @@ builds:
   ignore:
   - goos: darwin
     goarch: 386
+
+changelog:
+  skip: true
