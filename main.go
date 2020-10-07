@@ -35,7 +35,7 @@ var (
 	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
 	includeForks   = kingpin.Flag("include-forks", "Include forks").Default("false").Bool()
 	includePrivate = kingpin.Flag("include-private", "Include private repos").Default("false").Bool()
-	dryRun         = kingpin.Flag("dry-run", "Show more or less what will be done without doing anything").Short('d').Default("true").Bool()
+	dryRun         = kingpin.Flag("dry-run", "Show more or less what will be done without doing anything").Short('d').Default("false").Bool()
 )
 
 func main() {
