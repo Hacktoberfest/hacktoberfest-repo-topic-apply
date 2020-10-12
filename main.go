@@ -35,6 +35,7 @@ var (
 	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
 	includeForks   = kingpin.Flag("include-forks", "Include forks").Default("false").Bool()
 	includePrivate = kingpin.Flag("include-private", "Include private repos").Default("false").Bool()
+	includeCollabs = kingpin.Flag("include-collabs", "Include repos you collaborate on").Default("false").Bool()
 	dryRun         = kingpin.Flag("dry-run", "Show more or less what will be done without doing anything").Short('d').Default("false").Bool()
 )
 
@@ -82,7 +83,12 @@ func main() {
 		}
 	}
 	if *githubUser != "" {
-		opt := &github.RepositoryListOptions{Type: "all"}
+		var opt *github.RepositoryListOptions
+		if *includeCollabs == true {
+			opt = &github.RepositoryListOptions{Type: "all"}
+		} else {
+			opt = &github.RepositoryListOptions{Type: "all", Affiliation: "owner,organization_member"}
+		}
 		for {
 			var repos, resp, err = client.Repositories.List(ctx, *githubUser, opt)
 			if err != nil {
@@ -143,7 +149,7 @@ func main() {
 			_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
 			loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
 			if err != nil {
-				loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest topic to repo")
+				loggerWithFields.WithError(err).Infof("issue adding topic to repo")
 			}
 
 			labelColors := map[string]string{
@@ -159,7 +165,7 @@ func main() {
 						if strings.Contains(err.Error(), "already_exists") {
 							continue
 						} else {
-							loggerWithFields.WithError(err).Fatalf("issue adding hacktoberfest label to repo")
+							loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
 						}
 					} else {
 						loggerWithFields.WithField("label", label).Info("adding labels")
