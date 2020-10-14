@@ -67,7 +67,7 @@ func main() {
 	var allRepos []*github.Repository
 
 	if *githubOrg != "" {
-		opt := &github.RepositoryListByOrgOptions{Type: "all"}
+		opt := &github.RepositoryListByOrgOptions{Type: "public"}
 		for {
 			var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
 			if err != nil {
@@ -80,9 +80,39 @@ func main() {
 			}
 			opt.Page = resp.NextPage
 		}
+		if *includeForks == true {
+			opt := &github.RepositoryListByOrgOptions{Type: "forks"}
+			for {
+				var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+				if err != nil {
+					log.WithError(err).Fatalf("issue getting repositories")
+					break
+				}
+				allRepos = append(allRepos, repos...)
+				if resp.NextPage == 0 {
+					break
+				}
+				opt.Page = resp.NextPage
+			}
+		}
+		if *includePrivate == true {
+			opt := &github.RepositoryListByOrgOptions{Type: "private"}
+			for {
+				var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+				if err != nil {
+					log.WithError(err).Fatalf("issue getting repositories")
+					break
+				}
+				allRepos = append(allRepos, repos...)
+				if resp.NextPage == 0 {
+					break
+				}
+				opt.Page = resp.NextPage
+			}
+		}
 	}
 	if *githubUser != "" {
-		opt := &github.RepositoryListOptions{Type: "all"}
+		opt := &github.RepositoryListOptions{Type: "public"}
 		for {
 			var repos, resp, err = client.Repositories.List(ctx, *githubUser, opt)
 			if err != nil {
