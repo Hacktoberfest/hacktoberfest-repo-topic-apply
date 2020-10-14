@@ -112,7 +112,7 @@ func main() {
 		}
 	}
 	if *githubUser != "" {
-		opt := &github.RepositoryListOptions{Type: "public"}
+		opt := &github.RepositoryListOptions{Type: "all"}
 		for {
 			var repos, resp, err = client.Repositories.List(ctx, *githubUser, opt)
 			if err != nil {
