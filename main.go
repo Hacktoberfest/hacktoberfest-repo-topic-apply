@@ -15,6 +15,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -23,12 +24,14 @@ import (
 	"github.com/apex/log"
 	"github.com/apex/log/handlers/cli"
 	"github.com/google/go-github/v32/github"
+	"github.com/xanzy/go-gitlab"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	githubToken    = kingpin.Flag("access-token", "GitHub API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
-	githubUser     = kingpin.Flag("gh-user", "github user to fetch repos of").Short('u').String()
+	vcs			   = kingpin.Flag("vcs", "Github or Gitlab, defaults to Github").Short('V').Default("Github").String()
+	accessToken    = kingpin.Flag("access-token", "GitHub or Gitlab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
+	user       	   = kingpin.Flag("user", "github or gitlab user to fetch repos of").Short('u').String()
 	githubOrg      = kingpin.Flag("gh-org", "github org to fetch repos of").Short('o').String()
 	topic          = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
 	remove         = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
@@ -43,84 +46,51 @@ func main() {
 	kingpin.Parse()
 	log.SetHandler(cli.Default)
 
-	if *githubToken == "" {
+	if *accessToken == "" {
 		log.Info("no access token provided, attempting to look up githubs's access token in env vars")
 		token := os.Getenv("GITHUB_ACCESS_TOKEN")
 		if token == "" {
 			log.Fatalf("couldn't look up token")
 		}
 
-		*githubToken = token
+		*accessToken = token
 		log.Info("using github's access token found in env vars")
 	}
 
-	if *githubOrg == "" && *githubUser == "" {
-		log.Fatalf("Neither githubOrg or githubUser was set.")
+	if *githubOrg == "" && *user == "" {
+		log.Fatalf("Neither user or githubOrg was set.")
 	}
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: *githubToken},
+		&oauth2.Token{AccessToken: *accessToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
 
-	var allRepos []*github.Repository
+	if *vcs == "Gitlab" {
+		log.Info("Starting gitlab setup")
+		client, err := gitlab.NewClient(*accessToken)
+		if err != nil {
+			log.WithError(err).Fatalf("Couldn't connect to gitlab")
+		}
+		var allRepos []*gitlab.Project
 
-	if *githubOrg != "" {
-		opt := &github.RepositoryListByOrgOptions{Type: "public"}
-		for {
-			var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
-			if err != nil {
-				log.WithError(err).Fatalf("issue getting repositories")
-				break
-			}
-			allRepos = append(allRepos, repos...)
-			if resp.NextPage == 0 {
-				break
-			}
-			opt.Page = resp.NextPage
+		if *user == "" {
+			log.Fatalf("Gitlab was set but no user")
 		}
-		if *includeForks == true {
-			opt := &github.RepositoryListByOrgOptions{Type: "forks"}
-			for {
-				var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
-				if err != nil {
-					log.WithError(err).Fatalf("issue getting repositories")
-					break
-				}
-				allRepos = append(allRepos, repos...)
-				if resp.NextPage == 0 {
-					break
-				}
-				opt.Page = resp.NextPage
-			}
+		gitlab_user, _, err := client.Users.CurrentUser()
+		if err != nil {
+			log.WithError(err).Fatalf("issue getting user")
 		}
-		if *includePrivate == true {
-			opt := &github.RepositoryListByOrgOptions{Type: "private"}
-			for {
-				var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
-				if err != nil {
-					log.WithError(err).Fatalf("issue getting repositories")
-					break
-				}
-				allRepos = append(allRepos, repos...)
-				if resp.NextPage == 0 {
-					break
-				}
-				opt.Page = resp.NextPage
-			}
-		}
-	}
-	if *githubUser != "" {
-		var opt *github.RepositoryListOptions
+
+		var opt *gitlab.ListProjectsOptions
 		if *includeCollabs == true {
-			opt = &github.RepositoryListOptions{Type: "all"}
+			opt = &gitlab.ListProjectsOptions{}
 		} else {
-			opt = &github.RepositoryListOptions{Type: "all", Affiliation: "owner,organization_member"}
+			opt = &gitlab.ListProjectsOptions{}
 		}
 		for {
-			var repos, resp, err = client.Repositories.List(ctx, *githubUser, opt)
+			var repos, resp, err = client.Projects.ListUserProjects(gitlab_user.ID, opt)
 			if err != nil {
 				log.WithError(err).Fatalf("issue getting repositories")
 				break
@@ -131,81 +101,197 @@ func main() {
 			}
 			opt.Page = resp.NextPage
 		}
-	}
-
-	for _, repo := range allRepos {
-		loggerWithFields := log.WithField("repo", *repo.Name)
-
-		if *repo.Archived == true {
-			loggerWithFields.Info("skipping archived")
-			continue
-		}
-
-		if *repo.Disabled == true {
-			loggerWithFields.Info("skipping disabled")
-			continue
-		}
-
-		if *includeForks == false {
-			if *repo.Fork == true {
-				loggerWithFields.Info("skipping fork")
+		for _, repo := range allRepos {
+			loggerWithFields := log.WithField("repo", repo.NameWithNamespace)
+			if repo.Archived {
+				loggerWithFields.Info("skipping archived")
 				continue
 			}
-		}
 
-		if *includePrivate == false {
-			if *repo.Private == true {
-				loggerWithFields.Info("skipping private")
-				continue
-			}
-		}
-
-		var operation string
-		var topics []string
-		if *remove == true {
-			operation = "removing"
-			for _, t := range repo.Topics {
-				if t != *topic {
-					topics = append(topics, t)
+			if !*includeForks {
+				if repo.ForkedFromProject != nil {
+					loggerWithFields.Info("skipping fork")
+					continue
 				}
 			}
-		} else {
-			operation = "adding"
-			topics = repo.Topics
-			topics = append(topics, *topic)
-		}
 
-		if *dryRun != true {
-			_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
-			loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
-			if err != nil {
-				loggerWithFields.WithError(err).Infof("issue adding topic to repo")
+			if *includePrivate == false {
+				if repo.Visibility == "private" {
+					loggerWithFields.Info("skipping private")
+					continue
+				}
 			}
 
-			labelColors := map[string]string{
-				"hacktoberfest-accepted": "9c4668",
-				"invalid":                "ca0b00",
-				"spam":                   "b33a3a",
-			}
-			if *labels == true {
-
-				for label, color := range labelColors {
-					_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
-					if err != nil {
-						if strings.Contains(err.Error(), "already_exists") {
-							continue
-						} else {
-							loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
-						}
-					} else {
-						loggerWithFields.WithField("label", label).Info("adding labels")
+			var operation string
+			var topics []string
+			if *remove == true {
+				operation = "removing"
+				for _, t := range repo.Topics {
+					if t != *topic {
+						topics = append(topics, t)
 					}
 				}
+			} else {
+				operation = "adding"
+				topics = repo.Topics
+				topics = append(topics, *topic)
 			}
-		} else {
-			loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)
+
+			if *dryRun != true {
+				opt := &gitlab.EditProjectOptions{Topics: &topics}
+				loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
+				_, resp, err := client.Projects.EditProject(repo.ID, opt)
+				if err != nil {
+					log.WithError(err).Fatalf("Failed to edit project")
+					break
+				}
+				fmt.Println(resp)
+			} else {
+				loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)
+			}
+		}
+	} else {
+		client := github.NewClient(tc)
+		var allRepos []*github.Repository
+
+		if *githubOrg != "" {
+			opt := &github.RepositoryListByOrgOptions{Type: "public"}
+			for {
+				var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+				if err != nil {
+					log.WithError(err).Fatalf("issue getting repositories")
+					break
+				}
+				allRepos = append(allRepos, repos...)
+				if resp.NextPage == 0 {
+					break
+				}
+			}
+			if *includeForks == true {
+				opt := &github.RepositoryListByOrgOptions{Type: "forks"}
+				for {
+					var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+					if err != nil {
+						log.WithError(err).Fatalf("issue getting repositories")
+						break
+					}
+					allRepos = append(allRepos, repos...)
+					if resp.NextPage == 0 {
+						break
+					}
+					opt.Page = resp.NextPage
+				}
+			}
+			if *includePrivate == true {
+				opt := &github.RepositoryListByOrgOptions{Type: "private"}
+				for {
+					var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+					if err != nil {
+						log.WithError(err).Fatalf("issue getting repositories")
+						break
+					}
+					allRepos = append(allRepos, repos...)
+					if resp.NextPage == 0 {
+						break
+					}
+					opt.Page = resp.NextPage
+				}
+			}
+		}
+		if *user != "" {
+			var opt *github.RepositoryListOptions
+			if *includeCollabs == true {
+				opt = &github.RepositoryListOptions{Type: "all"}
+			} else {
+				opt = &github.RepositoryListOptions{Type: "all", Affiliation: "owner,organization_member"}
+			}
+			for {
+				var repos, resp, err = client.Repositories.List(ctx, *user, opt)
+				if err != nil {
+					log.WithError(err).Fatalf("issue getting repositories")
+					break
+				}
+				allRepos = append(allRepos, repos...)
+				if resp.NextPage == 0 {
+					break
+				}
+				opt.Page = resp.NextPage
+			}
+		}
+
+		for _, repo := range allRepos {
+			loggerWithFields := log.WithField("repo", *repo.Name)
+
+			if *repo.Archived == true {
+				loggerWithFields.Info("skipping archived")
+				continue
+			}
+
+			if *repo.Disabled == true {
+				loggerWithFields.Info("skipping disabled")
+				continue
+			}
+
+			if *includeForks == false {
+				if *repo.Fork == true {
+					loggerWithFields.Info("skipping fork")
+					continue
+				}
+			}
+
+			if *includePrivate == false {
+				if *repo.Private == true {
+					loggerWithFields.Info("skipping private")
+					continue
+				}
+			}
+
+			var operation string
+			var topics []string
+			if *remove == true {
+				operation = "removing"
+				for _, t := range repo.Topics {
+					if t != *topic {
+						topics = append(topics, t)
+					}
+				}
+			} else {
+				operation = "adding"
+				topics = repo.Topics
+				topics = append(topics, *topic)
+			}
+
+			if *dryRun != true {
+				_, _, err := client.Repositories.ReplaceAllTopics(ctx, *repo.Owner.Login, *repo.Name, topics)
+				loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
+				if err != nil {
+					loggerWithFields.WithError(err).Infof("issue adding topic to repo")
+				}
+
+				labelColors := map[string]string{
+					"hacktoberfest-accepted": "9c4668",
+					"invalid":                "ca0b00",
+					"spam":                   "b33a3a",
+				}
+				if *labels == true {
+
+					for label, color := range labelColors {
+						_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+						if err != nil {
+							if strings.Contains(err.Error(), "already_exists") {
+								continue
+							} else {
+								loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
+							}
+						} else {
+							loggerWithFields.WithField("label", label).Info("adding labels")
+						}
+					}
+				}
+			} else {
+				loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)
+			}
 		}
 	}
-
 	log.Info("done!")
 }
