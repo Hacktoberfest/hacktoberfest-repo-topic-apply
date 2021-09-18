@@ -31,8 +31,8 @@ import (
 var (
 	vcs			   = kingpin.Flag("vcs", "Github or Gitlab, defaults to Github").Short('V').Default("Github").String()
 	accessToken    = kingpin.Flag("access-token", "GitHub or Gitlab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
-	user       	   = kingpin.Flag("user", "github or gitlab user to fetch repos of").Short('u').String()
-	githubOrg      = kingpin.Flag("gh-org", "github org to fetch repos of").Short('o').String()
+	user       	   = kingpin.Flag("user", "Github or Gitlab user to fetch repos of").Short('u').String()
+	org      	   = kingpin.Flag("org", "Github org or Gitlab group to fetch repos of").Short('o').String()
 	topic          = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
 	remove         = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
 	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
@@ -57,7 +57,7 @@ func main() {
 		log.Info("using github's access token found in env vars")
 	}
 
-	if *githubOrg == "" && *user == "" {
+	if *org == "" && *user == "" {
 		log.Fatalf("Neither user or githubOrg was set.")
 	}
 
@@ -74,32 +74,44 @@ func main() {
 			log.WithError(err).Fatalf("Couldn't connect to gitlab")
 		}
 		var allRepos []*gitlab.Project
-
-		if *user == "" {
-			log.Fatalf("Gitlab was set but no user")
-		}
-		gitlab_user, _, err := client.Users.CurrentUser()
-		if err != nil {
-			log.WithError(err).Fatalf("issue getting user")
-		}
-
-		var opt *gitlab.ListProjectsOptions
-		if *includeCollabs == true {
-			opt = &gitlab.ListProjectsOptions{}
-		} else {
-			opt = &gitlab.ListProjectsOptions{}
-		}
-		for {
-			var repos, resp, err = client.Projects.ListUserProjects(gitlab_user.ID, opt)
+		if *org != "" {
+			log.Info("Getting repos for group")
+			listGroupOpt := gitlab.ListGroupsOptions{Search: gitlab.String(*org)}
+			groups, _, err := client.Groups.ListGroups(&listGroupOpt)
 			if err != nil {
-				log.WithError(err).Fatalf("issue getting repositories")
-				break
+				log.WithError(err).Fatalf("issue getting group")
+			}
+			listGroupProjOpt := gitlab.ListGroupProjectsOptions{}
+			repos, _, err := client.Groups.ListGroupProjects(groups[0].ID, &listGroupProjOpt)
+			if err != nil {
+				log.WithError(err).Fatalf("issue getting repos for group")
 			}
 			allRepos = append(allRepos, repos...)
-			if resp.NextPage == 0 {
-				break
+		}
+		if *user != "" {
+			gitlab_user, _, err := client.Users.CurrentUser()
+			if err != nil {
+				log.WithError(err).Fatalf("issue getting user")
 			}
-			opt.Page = resp.NextPage
+
+			var opt *gitlab.ListProjectsOptions
+			if *includeCollabs == true {
+				opt = &gitlab.ListProjectsOptions{Membership: github.Bool(true)}
+			} else {
+				opt = &gitlab.ListProjectsOptions{Owned: github.Bool(true)}
+			}
+			for {
+				var repos, resp, err = client.Projects.ListUserProjects(gitlab_user.ID, opt)
+				if err != nil {
+					log.WithError(err).Fatalf("issue getting repositories")
+					break
+				}
+				allRepos = append(allRepos, repos...)
+				if resp.NextPage == 0 {
+					break
+				}
+				opt.Page = resp.NextPage
+			}
 		}
 		for _, repo := range allRepos {
 			loggerWithFields := log.WithField("repo", repo.NameWithNamespace)
@@ -154,10 +166,10 @@ func main() {
 		client := github.NewClient(tc)
 		var allRepos []*github.Repository
 
-		if *githubOrg != "" {
+		if *org != "" {
 			opt := &github.RepositoryListByOrgOptions{Type: "public"}
 			for {
-				var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+				var repos, resp, err = client.Repositories.ListByOrg(ctx, *org, opt)
 				if err != nil {
 					log.WithError(err).Fatalf("issue getting repositories")
 					break
@@ -170,7 +182,7 @@ func main() {
 			if *includeForks == true {
 				opt := &github.RepositoryListByOrgOptions{Type: "forks"}
 				for {
-					var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+					var repos, resp, err = client.Repositories.ListByOrg(ctx, *org, opt)
 					if err != nil {
 						log.WithError(err).Fatalf("issue getting repositories")
 						break
@@ -185,7 +197,7 @@ func main() {
 			if *includePrivate == true {
 				opt := &github.RepositoryListByOrgOptions{Type: "private"}
 				for {
-					var repos, resp, err = client.Repositories.ListByOrg(ctx, *githubOrg, opt)
+					var repos, resp, err = client.Repositories.ListByOrg(ctx, *org, opt)
 					if err != nil {
 						log.WithError(err).Fatalf("issue getting repositories")
 						break
