@@ -81,12 +81,18 @@ func main() {
 			if err != nil {
 				log.WithError(err).Fatalf("issue getting group")
 			}
-			listGroupProjOpt := gitlab.ListGroupProjectsOptions{}
-			repos, _, err := client.Groups.ListGroupProjects(groups[0].ID, &listGroupProjOpt)
-			if err != nil {
-				log.WithError(err).Fatalf("issue getting repos for group")
+			for {
+				listGroupProjOpt := gitlab.ListGroupProjectsOptions{}
+				repos, resp, err := client.Groups.ListGroupProjects(groups[0].ID, &listGroupProjOpt)
+				if err != nil {
+					log.WithError(err).Fatalf("issue getting repos for group")
+				}
+				allRepos = append(allRepos, repos...)
+				if resp.NextPage == 0 {
+					break
+				}
+				listGroupProjOpt.Page = resp.NextPage
 			}
-			allRepos = append(allRepos, repos...)
 		}
 		if *user != "" {
 			gitlab_user, _, err := client.Users.CurrentUser()
