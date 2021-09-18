@@ -82,7 +82,7 @@ func main() {
 				log.WithError(err).Fatalf("issue getting group")
 			}
 			for {
-				listGroupProjOpt := gitlab.ListGroupProjectsOptions{}
+				listGroupProjOpt := gitlab.ListGroupProjectsOptions{Visibility: gitlab.Visibility("public")}
 				repos, resp, err := client.Groups.ListGroupProjects(groups[0].ID, &listGroupProjOpt)
 				if err != nil {
 					log.WithError(err).Fatalf("issue getting repos for group")
@@ -92,6 +92,29 @@ func main() {
 					break
 				}
 				listGroupProjOpt.Page = resp.NextPage
+			}
+			if *includePrivate == true {
+				for {
+					listGroupProjOpt := gitlab.ListGroupProjectsOptions{Visibility: gitlab.Visibility("private")}
+					repos, resp, err := client.Groups.ListGroupProjects(groups[0].ID, &listGroupProjOpt)
+					if err != nil {
+						log.WithError(err).Fatalf("issue getting repos for group")
+					}
+					allRepos = append(allRepos, repos...)
+					if resp.NextPage == 0 {
+						break
+					}
+					listGroupProjOpt.Page = resp.NextPage
+				}
+			}
+			if *includeForks == false {
+				var allReposNoForks []*gitlab.Project
+				for _, repo := range allRepos {
+					if repo.ForkedFromProject == nil {
+						allReposNoForks = append(allReposNoForks, repo) 
+					}
+				}
+				allRepos = allReposNoForks
 			}
 		}
 		if *user != "" {
