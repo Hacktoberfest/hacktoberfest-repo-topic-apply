@@ -68,7 +68,6 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	if *vcs == "Gitlab" {
-		log.Info("Starting gitlab setup")
 		client, err := gitlab.NewClient(*accessToken)
 		if err != nil {
 			log.WithError(err).Fatalf("Couldn't connect to gitlab")
@@ -187,6 +186,27 @@ func main() {
 					break
 				}
 				fmt.Println(resp)
+				labelColors := map[string]string{
+					"hacktoberfest-accepted": "#9c4668",
+					"invalid":                "#ca0b00",
+					"spam":                   "#b33a3a",
+				}
+				if *labels == true {
+					for label, color := range labelColors {
+						labelOpt := gitlab.CreateLabelOptions{Name: gitlab.String(label), Color: gitlab.String(color)}
+						_, _, err := client.Labels.CreateLabel(repo.ID, &labelOpt)
+						if err != nil {
+							if strings.Contains(err.Error(), "already_exists") {
+								continue
+							} else {
+								loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
+							}
+						} else {
+							loggerWithFields.WithField("label", label).Info("adding labels")
+						}
+					}
+					
+				}
 			} else {
 				loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)
 			}
