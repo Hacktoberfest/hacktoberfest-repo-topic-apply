@@ -15,7 +15,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 
@@ -180,12 +179,11 @@ func main() {
 			if *dryRun != true {
 				opt := &gitlab.EditProjectOptions{Topics: &topics}
 				loggerWithFields.WithField("topic", *topic).Infof("%s topic", operation)
-				_, resp, err := client.Projects.EditProject(repo.ID, opt)
+				_, _, err := client.Projects.EditProject(repo.ID, opt)
 				if err != nil {
 					log.WithError(err).Fatalf("Failed to edit project")
 					break
 				}
-				fmt.Println(resp)
 				labelColors := map[string]string{
 					"hacktoberfest-accepted": "#9c4668",
 					"invalid":                "#ca0b00",
