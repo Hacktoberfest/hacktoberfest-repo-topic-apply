@@ -12,6 +12,7 @@ and `hacktoberfest-accepted` labels in your repos.
 ## Create a GitHub Token
 
 You will need a GitHub token to perform these actions on your repositories. Follow the instructions for [creating a personal access token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) and be sure to give it `repo` access.
+If you are using Gitlab instead, follow these instructions for [creating a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) instead.
 
 
 ## Usage
@@ -26,7 +27,7 @@ If you don't specify your GitHub token, the tool will look for an environment va
 To use Gitlab instead of Github
 
 ```sh
-hfest-repo -vcs Gitlab -t <GITHUB_TOKEN> 
+hfest-repo -vcs Gitlab -t <TOKEN> 
 ```
 
 if you don't specify your version control system, Github or Gitlab, it will default to Github.
