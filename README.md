@@ -37,6 +37,11 @@ if you don't specify your version control system, Github or Gitlab, it will defa
 ```sh
 hfest-repo -t <TOKEN> -u <USER> --labels
 ```
+### The "Default Hacktoberfest run this on my stuff in GitLab" command
+
+```sh
+hfest-repo --vcs Gitlab -t <TOKEN> -u <USER> --labels
+```
 
 ### The "Default Hacktoberfest run this on my stuff" command, but run as a dry run for validation
 
@@ -69,6 +74,16 @@ hfest-repo -t <TOKEN> -o <ORG> --labels
 hfest-repo -t <TOKEN> -u <USER>/-o <ORG> --remove
 ```
 
+### Remove Hacktoberfest topic from a user/org 
+```sh
+hfest-repo -t <TOKEN> -u <USER>/-o <ORG> --remove
+```
+
+### Remove Hacktoberfest topic and labels from a user/org 
+```sh
+hfest-repo -t <TOKEN> -u <USER>/-o <ORG> --labels --remove
+```
+
 ### Add an arbitrary topic to a user's/organization's repos instead of the `hacktoberfest` topic
 ```sh
 hfest-repo -t <TOKEN> -u <USER>/-o <ORG> -p fun
@@ -92,7 +107,8 @@ Flags:
   -u, --user=USER           Github or Gitlab user to fetch repos of
   -o, --org=ORG             Github org or Gitlab group to fetch repos of
   -p, --topic="hacktoberfest"  topic to add to repos
-  -r, --remove                 Remove hacktoberfest topic from all repos
+  -r, --remove                 Remove topic and labels from all repos. Include -l to
+                               remove labels
   -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo
       --include-forks          Include forks
       --include-private        Include private repos

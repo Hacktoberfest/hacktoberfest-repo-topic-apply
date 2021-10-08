@@ -28,12 +28,12 @@ import (
 )
 
 var (
-	vcs            = kingpin.Flag("vcs", "Github or Gitlab, defaults to Github").Short('V').Default("Github").String()
-	accessToken    = kingpin.Flag("access-token", "GitHub or Gitlab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: ACCESS_TOKEN").Short('t').Envar("ACCESS_TOKEN").String()
-	user           = kingpin.Flag("user", "Github or Gitlab user to fetch repos of").Short('u').String()
-	org            = kingpin.Flag("org", "Github org or Gitlab group to fetch repos of").Short('o').String()
+	vcs            = kingpin.Flag("vcs", "Github or GitLab, defaults to Github").Short('V').Default("Github").String()
+	accessToken    = kingpin.Flag("access-token", "GitHub or GitLab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: ACCESS_TOKEN").Short('t').Envar("ACCESS_TOKEN").String()
+	user           = kingpin.Flag("user", "Github or GitLab user to fetch repos of").Short('u').String()
+	org            = kingpin.Flag("org", "GitHub org or GitLab group to fetch repos of").Short('o').String()
 	topic          = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
-	remove         = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
+	remove         = kingpin.Flag("remove", "Remove topic and labels from all repos. Include -l to remove labels").Short('r').Default("false").Bool()
 	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
 	includeForks   = kingpin.Flag("include-forks", "Include forks").Default("false").Bool()
 	includePrivate = kingpin.Flag("include-private", "Include private repos").Default("false").Bool()
@@ -190,20 +190,35 @@ func main() {
 					"spam":                   "#b33a3a",
 				}
 				if *labels == true {
-					for label, color := range labelColors {
-						labelOpt := gitlab.CreateLabelOptions{Name: gitlab.String(label), Color: gitlab.String(color)}
-						_, _, err := client.Labels.CreateLabel(repo.ID, &labelOpt)
-						if err != nil {
-							if strings.Contains(err.Error(), "already_exists") {
-								continue
+					if *remove == true {
+						for label, _ := range labelColors {
+							labelOpt := gitlab.DeleteLabelOptions{Name: gitlab.String(label)}
+							_, err := client.Labels.DeleteLabel(repo.ID, &labelOpt)
+							if err != nil {
+								if strings.Contains(err.Error(), "doesnt_exist") {
+									continue
+								} else {
+									loggerWithFields.WithError(err).Infof("issue removing hacktoberfest labels in repo")
+								}
 							} else {
-								loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
+								loggerWithFields.WithField("label", label).Info("removing labels")
 							}
-						} else {
-							loggerWithFields.WithField("label", label).Info("adding labels")
+						}
+					} else {
+						for label, color := range labelColors {
+							labelOpt := gitlab.CreateLabelOptions{Name: gitlab.String(label), Color: gitlab.String(color)}
+							_, _, err := client.Labels.CreateLabel(repo.ID, &labelOpt)
+							if err != nil {
+								if strings.Contains(err.Error(), "already_exists") {
+									continue
+								} else {
+									loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
+								}
+							} else {
+								loggerWithFields.WithField("label", label).Info("adding labels")
+							}
 						}
 					}
-
 				}
 			} else {
 				loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)
@@ -328,22 +343,36 @@ func main() {
 				}
 
 				labelColors := map[string]string{
-					"hacktoberfest-accepted": "9c4668",
+					"hacktoberfest-accepted": "f54501",
 					"invalid":                "ca0b00",
 					"spam":                   "b33a3a",
 				}
 				if *labels == true {
-
-					for label, color := range labelColors {
-						_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
-						if err != nil {
-							if strings.Contains(err.Error(), "already_exists") {
-								continue
+					if *remove == true {
+						for label, _ := range labelColors {
+							_, err := client.Issues.DeleteLabel(ctx, *repo.Owner.Login, *repo.Name, label)
+							if err != nil {
+								if strings.Contains(err.Error(), "doesnt_exist") {
+									continue
+								} else {
+									loggerWithFields.WithError(err).Infof("issue removing hacktoberfest labels in repo")
+								}
 							} else {
-								loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
+								loggerWithFields.WithField("label", label).Info("removing labels")
 							}
-						} else {
-							loggerWithFields.WithField("label", label).Info("adding labels")
+						}
+					} else {
+						for label, color := range labelColors {
+							_, _, err := client.Issues.CreateLabel(ctx, *repo.Owner.Login, *repo.Name, &github.Label{Name: github.String(label), Color: github.String(color)})
+							if err != nil {
+								if strings.Contains(err.Error(), "already_exists") {
+									continue
+								} else {
+									loggerWithFields.WithError(err).Infof("issue adding hacktoberfest label to repo")
+								}
+							} else {
+								loggerWithFields.WithField("label", label).Info("adding labels")
+							}
 						}
 					}
 				}
