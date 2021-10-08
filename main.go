@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Kamal Nasser All rights reserved.
+Copyright 2020 Mason Egger All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -28,10 +28,10 @@ import (
 )
 
 var (
-	vcs			   = kingpin.Flag("vcs", "Github or Gitlab, defaults to Github").Short('V').Default("Github").String()
-	accessToken    = kingpin.Flag("access-token", "GitHub or Gitlab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: GITHUB_ACCESS_TOKEN").Short('t').Envar("GITHUB_ACCESS_TOKEN").String()
-	user       	   = kingpin.Flag("user", "Github or Gitlab user to fetch repos of").Short('u').String()
-	org      	   = kingpin.Flag("org", "Github org or Gitlab group to fetch repos of").Short('o').String()
+	vcs            = kingpin.Flag("vcs", "Github or Gitlab, defaults to Github").Short('V').Default("Github").String()
+	accessToken    = kingpin.Flag("access-token", "GitHub or Gitlab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: ACCESS_TOKEN").Short('t').Envar("ACCESS_TOKEN").String()
+	user           = kingpin.Flag("user", "Github or Gitlab user to fetch repos of").Short('u').String()
+	org            = kingpin.Flag("org", "Github org or Gitlab group to fetch repos of").Short('o').String()
 	topic          = kingpin.Flag("topic", "topic to add to repos").Short('p').Default("hacktoberfest").String()
 	remove         = kingpin.Flag("remove", "Remove hacktoberfest topic from all repos").Short('r').Default("false").Bool()
 	labels         = kingpin.Flag("labels", "Add spam, invalid, and hacktoberfest-accepted labels to repo").Short('l').Default("false").Bool()
@@ -46,18 +46,18 @@ func main() {
 	log.SetHandler(cli.Default)
 
 	if *accessToken == "" {
-		log.Info("no access token provided, attempting to look up githubs's access token in env vars")
-		token := os.Getenv("GITHUB_ACCESS_TOKEN")
+		log.Info("no access token provided, attempting to look up access token in env vars")
+		token := os.Getenv("ACCESS_TOKEN")
 		if token == "" {
-			log.Fatalf("couldn't look up token")
+			log.Fatalf("couldn't look up token in ACCESS_TOKEN")
 		}
 
 		*accessToken = token
-		log.Info("using github's access token found in env vars")
+		log.Info("using access token found in env vars")
 	}
 
 	if *org == "" && *user == "" {
-		log.Fatalf("Neither user or githubOrg was set.")
+		log.Fatalf("Neither user or org was set.")
 	}
 
 	ctx := context.Background()
@@ -109,7 +109,7 @@ func main() {
 				var allReposNoForks []*gitlab.Project
 				for _, repo := range allRepos {
 					if repo.ForkedFromProject == nil {
-						allReposNoForks = append(allReposNoForks, repo) 
+						allReposNoForks = append(allReposNoForks, repo)
 					}
 				}
 				allRepos = allReposNoForks
@@ -185,7 +185,7 @@ func main() {
 					break
 				}
 				labelColors := map[string]string{
-					"hacktoberfest-accepted": "#9c4668",
+					"hacktoberfest-accepted": "#f54501",
 					"invalid":                "#ca0b00",
 					"spam":                   "#b33a3a",
 				}
@@ -203,7 +203,7 @@ func main() {
 							loggerWithFields.WithField("label", label).Info("adding labels")
 						}
 					}
-					
+
 				}
 			} else {
 				loggerWithFields.WithField("topic", *topic).Infof("[dryrun] %s topic", operation)

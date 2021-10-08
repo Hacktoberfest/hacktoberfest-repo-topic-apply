@@ -9,10 +9,10 @@ and `hacktoberfest-accepted` labels in your repos.
 1. Download the latest release from [the releases page](https://github.com/do-community/hacktoberfest-repo-topic-apply/releases/).
 2. Either move the binary to `/usr/local/bin` or run it locally.
 
-## Create a GitHub Token
+## Create an Access Token
 
-You will need a GitHub token to perform these actions on your repositories. Follow the instructions for [creating a personal access token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) and be sure to give it `repo` access.
-If you are using Gitlab instead, follow these instructions for [creating a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) instead.
+You will need an access token to perform these actions on your repositories. Follow the instructions for [creating a personal access token on GitHub](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) and be sure to give it `repo` access.
+If you are using GitLab instead, follow these instructions for [creating a personal access token on GitLab](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html) instead.
 
 
 ## Usage
@@ -24,7 +24,7 @@ hfest-repo -t <TOKEN>
 ```
 If you don't specify your GitHub token, the tool will look for an environment variable named `ACCESS_TOKEN`.
 
-To use Gitlab instead of Github
+To use GitLab instead of GitHub
 
 ```sh
 hfest-repo -vcs Gitlab -t <TOKEN> 
@@ -32,7 +32,7 @@ hfest-repo -vcs Gitlab -t <TOKEN>
 
 if you don't specify your version control system, Github or Gitlab, it will default to Github.
 
-### The "Default Hacktoberfest run this on my stuff" command
+### The "Default Hacktoberfest run this on my stuff in GitHub" command
 
 ```sh
 hfest-repo -t <TOKEN> -u <USER> --labels
@@ -86,10 +86,11 @@ usage: hfest-repo [<flags>]
 
 Flags:
       --help                   Show context-sensitive help (also try --help-long and --help-man).
+  -V, --vcs="Github"           GitHub or GitLab, defaults to GitHub
   -t, --access-token=ACCESS-TOKEN  
-                               GitHub or Gitlab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: ACCESS_TOKEN
-  -u, --user=GH-USER           Github or Gitlab user to fetch repos of
-  -o, --org=GH-ORG             Github org or Gitlab group to fetch repos of
+                               GitHub or GitLab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: ACCESS_TOKEN
+  -u, --user=USER           Github or Gitlab user to fetch repos of
+  -o, --org=ORG             Github org or Gitlab group to fetch repos of
   -p, --topic="hacktoberfest"  topic to add to repos
   -r, --remove                 Remove hacktoberfest topic from all repos
   -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo
