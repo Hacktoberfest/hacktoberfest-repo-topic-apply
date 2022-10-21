@@ -115,3 +115,7 @@ Flags:
   -d, --dry-run                Show more or less what will be done without doing anything
 
 ```
+ ## Thanks to all contributors ❤
+<a href="https://github.com/Hacktoberfest/hacktoberfest-repo-topic-apply/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Hacktoberfest/hacktoberfest-repo-topic-apply" />
+</a>
