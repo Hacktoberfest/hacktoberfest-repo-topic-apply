@@ -96,22 +96,21 @@ hfest-repo -t <TOKEN> -u <USER> --include-forkes --include-private
 
 ### Supported Options
 
-```
 usage: hfest-repo [<flags>]
 
 Flags:
-      --help                   Show context-sensitive help (also try --help-long and --help-man).
-  -V, --vcs="Github"           GitHub or GitLab, defaults to GitHub
-  -t, --access-token=ACCESS-TOKEN  
-                               GitHub or GitLab API Token - if unset, attempts to use this tool's stored token of its current default context. env var: ACCESS_TOKEN
-  -u, --user=USER           Github or Gitlab user to fetch repos of
-  -o, --org=ORG             Github org or Gitlab group to fetch repos of
-  -p, --topic="hacktoberfest"  topic to add to repos
-  -r, --remove                 Remove topic and labels from all repos. Include -l to
-                               remove labels
-  -l, --labels                 Add spam, invalid, and hacktoberfest-accepted labels to repo
-      --include-forks          Include forks
-      --include-private        Include private repos
-  -d, --dry-run                Show more or less what will be done without doing anything
+  --help                     Show help information
+  -V, --vcs="Github"         Choose "Github" or "Gitlab" (default: Github)
+  -t, --access-token=TOKEN   GitHub or GitLab API token (or use ACCESS_TOKEN env var)
+  -u, --user=USER            GitHub/GitLab username
+  -o, --org=ORG              GitHub organization or GitLab group name
+  -p, --topic="hacktoberfest" Topic to add to repositories
+  -r, --remove               Remove topic and/or labels
+  -l, --labels               Add (or remove with -r) default labels:
+                             - hacktoberfest-accepted
+                             - invalid
+                             - spam
+  --include-forks            Include forked repositories
+  --include-private          Include private repositories
+  -d, --dry-run              Show planned actions without executing
 
-```
